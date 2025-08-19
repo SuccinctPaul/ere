@@ -1,18 +1,18 @@
 use crate::{EreJoltProof, error::VerifyError};
 use common::constants::{DEFAULT_MAX_BYTECODE_SIZE, DEFAULT_MAX_TRACE_LENGTH, DEFAULT_MEMORY_SIZE};
 use jolt::{
-    Jolt, JoltHyperKZGProof, JoltProverPreprocessing, JoltVerifierPreprocessing, MemoryConfig,
-    MemoryLayout, RV32IJoltVM, tracer::JoltDevice,
+    Jolt, JoltHyperKZGProof, JoltProverPreprocessing, JoltRV32IM, JoltVerifierPreprocessing,
+    MemoryConfig, MemoryLayout, tracer::JoltDevice,
 };
 use zkvm_interface::Input;
 
 pub fn preprocess_prover(
     program: &jolt::host::Program,
-) -> JoltProverPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript> {
+) -> JoltProverPreprocessing<4, jolt::F, jolt::PCS> {
     let (bytecode, memory_init) = program.decode();
     let memory_layout = MemoryLayout::new(&MemoryConfig::default());
-    let preprocessing: JoltProverPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript> =
-        RV32IJoltVM::prover_preprocess(
+    let preprocessing: JoltProverPreprocessing<4, jolt::F, jolt::PCS> =
+        JoltRV32IM::prover_preprocess(
             bytecode,
             memory_layout,
             memory_init,
@@ -29,7 +29,7 @@ pub fn preprocess_verifier(
     let (bytecode, memory_init) = program.decode();
     let memory_layout = MemoryLayout::new(&MemoryConfig::default());
     let preprocessing: JoltVerifierPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript> =
-        RV32IJoltVM::verifier_preprocess(
+        JoltRV32IM::verifier_preprocess(
             bytecode,
             memory_layout,
             memory_init,
@@ -54,7 +54,7 @@ pub fn prove_generic(
     let (io_device, trace) = program.trace(&input_bytes);
 
     let (jolt_proof, jolt_commitments, io_device, _) =
-        RV32IJoltVM::prove(io_device, trace, preprocessing);
+        JoltRV32IM::prove(io_device, trace, preprocessing);
 
     EreJoltProof {
         proof: JoltHyperKZGProof {
@@ -77,7 +77,7 @@ pub fn verify_generic(
     });
     io_device.outputs = proof.public_outputs;
 
-    RV32IJoltVM::verify(
+    JoltRV32IM::verify(
         preprocessing,
         proof.proof.proof,
         proof.proof.commitments,
