@@ -1,17 +1,16 @@
-#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use crate::error::{CommonError, CompileError, ExecuteError, OpenVMError, ProveError, VerifyError};
 use openvm_build::GuestOptions;
 use openvm_circuit::arch::instructions::exe::VmExe;
 use openvm_continuations::verifier::internal::types::VmStarkProof;
+use openvm_sdk::config::{AppFriParams, LeafFriParams};
 use openvm_sdk::{
     F, SC, Sdk, StdIn,
     codec::{Decode, Encode},
     commit::AppExecutionCommit,
-    config::{AppConfig, DEFAULT_APP_LOG_BLOWUP, DEFAULT_LEAF_LOG_BLOWUP, SdkVmConfig},
+    config::{AppConfig, SdkVmConfig},
     keygen::AggVerifyingKey,
 };
-use openvm_stark_sdk::config::FriParameters;
 use openvm_transpiler::{elf::Elf, openvm_platform::memory::MEM_SIZE};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{fs, io::Read, path::Path, sync::Arc, time::Instant};
@@ -66,10 +65,7 @@ impl Compiler for OPENVM_TARGET {
         } else {
             // The default `AppConfig` copied from https://github.com/openvm-org/openvm/blob/ca36de3/crates/cli/src/default.rs#L31.
             AppConfig {
-                app_fri_params: FriParameters::standard_with_100_bits_conjectured_security(
-                    DEFAULT_APP_LOG_BLOWUP,
-                )
-                .into(),
+                app_fri_params: AppFriParams::default(),
                 // By default it supports RISCV32IM with IO but no precompiles.
                 app_vm_config: SdkVmConfig::builder()
                     .system(Default::default())
@@ -77,10 +73,7 @@ impl Compiler for OPENVM_TARGET {
                     .rv32m(Default::default())
                     .io(Default::default())
                     .build(),
-                leaf_fri_params: FriParameters::standard_with_100_bits_conjectured_security(
-                    DEFAULT_LEAF_LOG_BLOWUP,
-                )
-                .into(),
+                leaf_fri_params: LeafFriParams::default(),
                 compiler_options: Default::default(),
             }
         };
